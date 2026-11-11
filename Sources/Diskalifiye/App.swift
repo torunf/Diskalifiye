@@ -152,7 +152,8 @@ enum CLI {
         if CommandLine.arguments.contains("--cleanup") {
             for c in CleanupEngine.analyze(root: root) {
                 print("[\(c.risk.title)] \(c.title): \(fmt(c.total)) (\(c.items.count) öğe)")
-                for i in c.items.prefix(3) { print("    \(fmt(i.size))\t\(i.name)") }
+                let all = CommandLine.arguments.contains("--all")
+                for i in c.items.prefix(all ? Int.max : 3) { print("    \(fmt(i.size))\t\(all ? i.path : i.name)") }
             }
         }
     }
