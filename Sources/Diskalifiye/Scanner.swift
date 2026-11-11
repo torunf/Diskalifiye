@@ -53,7 +53,9 @@ enum Scanner {
     static let fileThreshold: Int64 = 256 * 1024
     static let dirThreshold: Int64 = 256 * 1024
     private static let manualDepth = 3
-    private static let rootSkips: Set<String> = ["/System/Volumes", "/Volumes", "/dev", "/net", "/home", "/.vol"]
+    /// Tüm disk taranırken atlanan yollar. /.nofollow ve /.resolve, macOS'in kök dizini aynen yansıtan
+    /// sanal yollarıdır; taranırlarsa bütün disk ikinci kez sayılır.
+    private static let rootSkips: Set<String> = ["/System/Volumes", "/Volumes", "/dev", "/net", "/home", "/.vol", "/.nofollow", "/.resolve"]
 
     static func scan(rootPath: String, progress: ScanProgress) -> FileNode? {
         var rst = stat()
