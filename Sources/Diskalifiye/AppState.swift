@@ -63,7 +63,25 @@ final class AppState: ObservableObject {
     private var scanProgress: ScanProgress?
     private var dupCancel: CancelFlag?
 
+    private var diskTimer: Timer?
+
+    /// Boş alan bilgisini yeniler. Dosyalar uygulama dışında (Finder, Çöp Kutusu) silindiğinde de güncel kalsın diye
+    /// düzenli aralıklarla ve uygulama öne geldiğinde çağrılır.
+    func refreshDisk() {
+        let d = DiskInfo.current()
+        if d.available != disk.available || d.total != disk.total || d.name != disk.name { disk = d }
+    }
+
     init() {
+        diskTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.refreshDisk() }
+        }
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                self?.refreshDisk()
+                if self?.cleanupAnalyzed == true { self?.refreshTrashSize() }
+            }
+        }
         // Geliştirme için: --autoscan <yol> [--section cleanup|large|duplicates]
         let args = CommandLine.arguments
         if let i = args.firstIndex(of: "--autoscan"), i + 1 < args.count {
