@@ -26,3 +26,7 @@ Daha eksiksiz sonuç için uygulamaya **Sistem Ayarları → Gizlilik ve Güvenl
 
 - 256 KB altındaki dosya ve klasörler haritada tek tek değil, "Küçük öğeler" bloğu olarak gösterilir.
 - Uygulama imzasızdır (ad-hoc); kendi makinende derleyip çalıştırman içindir.
+
+## Lisans
+
+[MIT](LICENSE)
