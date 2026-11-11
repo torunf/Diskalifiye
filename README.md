@@ -11,7 +11,19 @@ Mac'inde dosyaların nerede yer kapladığını gösteren ve nelerin temizlenebi
 
 Hiçbir şey doğrudan silinmez: öğeler onay alındıktan sonra Çöp Kutusu'na taşınır.
 
-## Derleme
+## Kurulum
+
+1. [Son sürümü indir](https://github.com/torunf/Diskalifiye/releases/latest) (`Diskalifiye-x.y.dmg`).
+2. DMG'yi aç ve Diskalifiye'yi Uygulamalar klasörüne sürükle.
+3. Uygulama Apple tarafından imzalanmadığı için ilk açılışta macOS engelleyebilir. **Sistem Ayarları → Gizlilik ve Güvenlik** bölümünden **Yine de Aç**'a bas ya da Terminal'de şunu çalıştır:
+
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/Diskalifiye.app
+   ```
+
+Apple Silicon ve Intel Mac'lerde çalışır (macOS 14+).
+
+## Kaynaktan derleme
 
 macOS 14+ ve Xcode (Swift 5.9+) gerekir.
 
@@ -25,7 +37,7 @@ Daha eksiksiz sonuç için uygulamaya **Sistem Ayarları → Gizlilik ve Güvenl
 ## Notlar
 
 - 256 KB altındaki dosya ve klasörler haritada tek tek değil, "Küçük öğeler" bloğu olarak gösterilir.
-- Uygulama imzasızdır (ad-hoc); kendi makinende derleyip çalıştırman içindir.
+- `main` dalına gönderilen her kod değişikliği GitHub Actions ile otomatik olarak yeni bir sürüm (v1.0, v1.1, …) olarak yayınlanır.
 
 ## Lisans
 

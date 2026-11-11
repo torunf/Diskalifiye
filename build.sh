@@ -1,13 +1,22 @@
 #!/bin/bash
 # Diskalifiye.app paketini üretir:  ./build.sh  (ardından: open build/Diskalifiye.app)
+#   VERSION=1.2 BUILD=7 ./build.sh   sürüm numarasını belirler
+#   UNIVERSAL=1 ./build.sh           Apple Silicon + Intel için evrensel ikili üretir
+#   DMG=1 ./build.sh                 ayrıca build/Diskalifiye-<sürüm>.dmg üretir
 set -euo pipefail
 cd "$(dirname "$0")"
 
-swift build -c release
+VERSION="${VERSION:-1.0}"
+BUILD="${BUILD:-1}"
+ARCHS=()
+if [ "${UNIVERSAL:-0}" = "1" ]; then ARCHS=(--arch arm64 --arch x86_64); fi
+
+swift build -c release ${ARCHS[@]+"${ARCHS[@]}"}
+BIN="$(swift build -c release ${ARCHS[@]+"${ARCHS[@]}"} --show-bin-path)/Diskalifiye"
 APP=build/Diskalifiye.app
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp .build/release/Diskalifiye "$APP/Contents/MacOS/Diskalifiye"
+cp "$BIN" "$APP/Contents/MacOS/Diskalifiye"
 
 # Simge
 TMP=$(mktemp -d)
@@ -20,7 +29,7 @@ done
 iconutil -c icns "$TMP/AppIcon.iconset" -o "$APP/Contents/Resources/AppIcon.icns"
 rm -rf "$TMP"
 
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -31,8 +40,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key><string>Diskalifiye</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+  <key>CFBundleVersion</key><string>${BUILD}</string>
   <key>CFBundleDevelopmentRegion</key><string>tr</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
@@ -43,4 +52,15 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 PLIST
 
 codesign --force --sign - "$APP" >/dev/null 2>&1 || true
-echo "Hazır: $APP"
+echo "Hazır: $APP ($VERSION)"
+
+if [ "${DMG:-0}" = "1" ]; then
+  STAGE=$(mktemp -d)
+  cp -R "$APP" "$STAGE/"
+  ln -s /Applications "$STAGE/Applications"
+  OUT="build/Diskalifiye-$VERSION.dmg"
+  rm -f "$OUT"
+  hdiutil create -volname "Diskalifiye" -srcfolder "$STAGE" -ov -format UDZO "$OUT" >/dev/null
+  rm -rf "$STAGE"
+  echo "Hazır: $OUT"
+fi

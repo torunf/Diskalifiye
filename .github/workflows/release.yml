@@ -1,0 +1,54 @@
+# main'e her kod değişikliği gönderildiğinde yeni bir sürüm derler ve GitHub Releases'e DMG olarak yayınlar.
+# İlk sürüm v1.0; sonrakiler v1.1, v1.2, … şeklinde otomatik artar.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sürüm numarasını belirle
+        id: ver
+        run: |
+          latest=$(git tag -l 'v*' --sort=-v:refname | head -1)
+          if [ -z "$latest" ]; then
+            next="1.0"
+          else
+            v="${latest#v}"
+            next="${v%%.*}.$(( ${v#*.} + 1 ))"
+          fi
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+          echo "Sürüm: $next"
+
+      - name: Derle ve paketle
+        run: VERSION="${{ steps.ver.outputs.version }}" BUILD="${{ github.run_number }}" UNIVERSAL=1 DMG=1 ./build.sh
+
+      - name: Yayınla
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${{ steps.ver.outputs.version }}"
+          gh release create "v$V" "build/Diskalifiye-$V.dmg" \
+            --title "Diskalifiye $V" \
+            --target "$GITHUB_SHA" \
+            --generate-notes \
+            --notes "**Kurulum:** \`Diskalifiye-$V.dmg\` dosyasını indir, aç ve Diskalifiye'yi Uygulamalar klasörüne sürükle. Uygulama Apple tarafından imzalanmadığı için ilk açılışta macOS engelleyebilir; Sistem Ayarları → Gizlilik ve Güvenlik bölümünden **Yine de Aç**'a bas ya da Terminal'de \`xattr -dr com.apple.quarantine /Applications/Diskalifiye.app\` çalıştır."
